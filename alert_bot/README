@@ -1,0 +1,9 @@
+This bot targets a user and informs certain people (stored in a database "Subscribers") when that targetted user posted something.
+The intended target user should be a bot, not a real user. 
+It can be hosted on Heroku and uses postgreSQL.
+The postgreSQL is also hosted on Heroku.
+Everything required to run should be free(as of today 3/13/2015).
+
+
+
+
