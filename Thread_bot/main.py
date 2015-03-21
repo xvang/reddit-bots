@@ -52,14 +52,14 @@ class Thread:
             time_left = 500
             #If 5 minutes before tipoff, then post the game thread.
             if (not self.posted_game and time_left <= 300):
-                self.postManager.post_game( self.fetchManager )
+               # self.postManager.post_game( self.fetchManager )
                 self.posted_game = True
                 
                 
             
             #if 30 minutes before tipoff, then post the pre-game thread.
             elif (not self.posted_pre and time_left <= 1800):            
-                #self.postManager.post_pregame( self.fetchManager )
+                self.postManager.post_pregame( self.fetchManager )
                 self.posted_pre = True
 
             #Average game is 2:30

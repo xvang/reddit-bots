@@ -13,14 +13,21 @@ class Fetcher:
     def __init__(self):
         s = 3
 
-        self.team = "Orlando"          #Team to post for.
-        self.fetched_pregame = False                    #if true, then already fetched game info.
-        self.date_list = None                 #["weekday", "month", "date"]
-        self.weekday = 0                        #0 = Monday, 1 = Tuesday, etc.
-        self.pre_game  = {}                         #dictionary that contains most of the game information.
+        self.team = "Chicago"                                  #Team to post for.
+        self.fetched_pregame = False                        #if true, then already fetched game info.
+        self.date_list = None                                   #["weekday", "month", "date"]
+        self.weekday = 0                                         #0 = Monday, 1 = Tuesday, etc.
+        self.pre_game  = {}                                     #dictionary that contains most of the game information.
         self.post_game = {}
 
-        self.player_list = []                           #stores a list of players and their stats.
+        self.home_team_list = []                                #stores a list of players and their stats.
+        self.road_team_list = []                                  #stores a list of players and their stats.
+
+        self.home_starters = []                                  #stores a list of the starters for the home team
+        self.road_starters = []                                   #stores a list of the starters for the road team
+
+        self.home_starters_stats = []                           #redundant?
+        self.road_starters_stats = []
         self.game_today = False
         self.weekday_conversion = {'Monday': 0,
                                    'Tuesday':1,
@@ -44,8 +51,10 @@ class Fetcher:
                                  'December': 12}
 
         self.url_team_conversion = {'Atlanta': 'atl',
-                                    'Boston':'bos', 'Brooklyn':'bkn',
-                                    'Charlotte':'cha','Chicago':'chi',
+                                    'Boston':'bos',
+                                    'Brooklyn':'bkn',
+                                    'Charlotte':'cha',
+                                    'Chicago':'chi',
                                     'Cleveland':'cle','Dallas':'dal',
                                     'Denver':'den','Detroit':'det',
                                     'Golden State':'gsw','Houston':'hou',
@@ -147,25 +156,66 @@ class Fetcher:
                 self.pre_game['preview_link'] = str(a_all[2]['href'])
                 self.pre_game['tickets_link'] = a_all[-1]['href']
 
-
-
-                #for dd in self.game:
-                   # print(dd + "              " + str(self.pre_game[dd]))
-                   
                 #found team, no need to check further.
                 break
 
+
+        #Fetch all the player on the roster's stats.
+        self.fetch_player_stats(self.url_team_conversion[self.pre_game['home_team']], self.home_team_list)
+        self.fetch_player_stats(self.url_team_conversion[self.pre_game['road_team']], self.road_team_list)
+
+        #Fetch the starters.
+        self.fetch_starters(self.url_team_conversion[self.pre_game['home_team']],self.home_starters)
+        self.fetch_starters(self.url_team_conversion[self.pre_game['road_team']], self.road_starters)
+
+
+        #Fetching the starters' stats from the team lists and storing them into a different list.
+        #Redundant, but it's easier to sort them this way. I think.
+        for x in self.home_starters:
+            for y in self.home_team_list:
+                if(str(x) in y.dictionary['name']):
+                    self.home_starters_stats.append(y)
+                    break;
+
+
+        for x in self.road_starters:
+            for y in self.road_team_list:
+                if (str(x) in y.dictionary['name']):
+                    self.road_starters_stats.append(y)
+                    break;
+
+
         
 
+
         #At the very end of fetch_game_info(), we toggle "fetched" to true.
-        #If something went wrong while parsing, then this statement will never be executed.
+        #If something went wrong while parsing, then this statement should never be executed.
         self.fetched_pregame = True
-        self.fetch_player_stats()
 
+    def fetch_starters(self, team_name, team_list):
+        url = "http://espn.go.com/nba/team/depth/_/name/"  + team_name
 
+        page = urllib.request.urlopen(url)
+
+        soup = BeautifulSoup(page)
+
+        div = soup.find('div', {'class': 'mod-container mod-table'})
+
+        #The div above contains 2 elements: another div with all the players stats,
+        #and a link to "full depth charts". We want just the first one.
+        table = div.find('table',{})
+
+        for tr in table:
+            counter = 0
+            for names in tr:
+                if((counter == 1) and (not names.text.lower() == "starter")):
+                    team_list.append(names.text)
+                    break;                                  #we break because we only want the first column, which are the starters.
+                counter = counter + 1               #Using a counter here is a temporary solution. We only want the [1] element of each row.
+        
     #Fetch starting players.
-    def fetch_player_stats(self):
-        url = "http://espn.go.com/nba/team/stats/_/name/" + str(self.url_team_conversion[self.team])
+    def fetch_player_stats(self, team_name, team_list):
+        url = "http://espn.go.com/nba/team/stats/_/name/" + team_name
 
         page = urllib.request.urlopen(url)
 
@@ -189,18 +239,25 @@ class Fetcher:
         #Each 'tr' has a bunch of 'td' tags in them. Those are the ones that have the numbers.
         for td in tr:
             player = Player()
+
+            for link in td.find_all('a', href=True):
+                player.input_link(link['href'])
+                break;
+            
             for x in td:
 
                 #The if-statement prevents adding the first 2 rows as a "players". They are headers.
                 if(x.text.lower() in "game statistics" or x.text.lower() in "player"):
                     break;
+                
+                player.brute_input(x.text)
 
-                player.brute_input(x.text) 
-            print(player.dictionary)
-            print('\n\n\n')
-            
-            self.player_list.append(player)
-            
+                
+            #if-statement is exclude the first two rows.
+            if((not player.dictionary['name'] == "name" ) and (not str(player.dictionary['name']).lower() == "totals")):
+                team_list.append(player)
+
+                
             
             
             
@@ -214,20 +271,10 @@ class Fetcher:
 
         soup = BeautifulSoup(page)
 
-        #get the schedule for the week.
-        div = soup.find('div', {'class':'mod-container mod-table mod-no-header-footer'})
-
-        #Table contains all the scores for all the game played today.
-        #
-        table = div.find('table', {})
 
     def get_live_game_info(self):
         url = "https://espn.go.com/nba/schedule"
 
-        page = urllib.request.urlopen(url)
-
-        soup = BeautifulSoup(page)
-        print(soup)
 
 
 
