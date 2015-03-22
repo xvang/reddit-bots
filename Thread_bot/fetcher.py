@@ -13,9 +13,9 @@ class Fetcher:
     def __init__(self):
         s = 3
 
-        self.team = "Chicago"                                  #Team to post for.
+        self.team = "New York"                                  #Team to post for.
         self.fetched_pregame = False                        #if true, then already fetched game info.
-        self.date_list = None                                   #["weekday", "month", "date"]
+        self.date_list = []                                   #["weekday", "month", "date"]
         self.weekday = 0                                         #0 = Monday, 1 = Tuesday, etc.
         self.pre_game  = {}                                     #dictionary that contains most of the game information.
         self.post_game = {}
@@ -58,14 +58,14 @@ class Fetcher:
                                     'Cleveland':'cle','Dallas':'dal',
                                     'Denver':'den','Detroit':'det',
                                     'Golden State':'gsw','Houston':'hou',
-                                    'Indiana':'ind','LA Clippers':'lac',
-                                    'LA Lakers':'lal','Memphis':'mem',
+                                    'Indiana':'ind','LAClippers':'lac',
+                                    'LALakers':'lal','Memphis':'mem',
                                     'Miami':'mia','Milwaukee':'mil',
-                                    'Minnesota':'min','New Orleans':'no',
-                                    'New York':'ny','Oklahoma City':'okc',
+                                    'Minnesota':'min','NewOrleans':'no',
+                                    'NewYork':'ny','OklahomaCity':'okc',
                                     'Orlando':'orl','Philadelphia':'phi',
                                     'Phoenix':'pho','Portland':'por',
-                                    'Sacramento':'sac','San Antonio':'sas',
+                                    'Sacramento':'sac','SanAntonio':'sas',
                                     'Toronto':'tor','Utah':'utah',
                                     'Washington':'was'}
     
@@ -91,14 +91,15 @@ class Fetcher:
 
         target_table = table[0]
 
-        #if the games are played already, then the first table will be the results.
-        #We don't want results from here. We want the upcoming games.
-        #The next games should be in the second table.
-        #It's late and I'm still working on this, and the page changed to show results, so I had to change with it. 
-        #We should NEVER have to check the second table. This webpage should only be parsed for pre-game stuff.
-        if("result" in table[0].text.lower()):
-            target_table = table[1]
+       #There are seven tables. Sometimes the first table show the results. We don't want that.
+       #Sometimes the team doesn't play for a few days. We want to get to the table day where the team plays.
+        for t in table:
+            target_table = t
+            if("result" in t.text.lower() or (self.team not in t.text)):
+                target_table = t
+            else:
 
+                break; #Break the for loop. We found a team.
 
 
         #The 'stathead' class contains the date.
@@ -131,23 +132,27 @@ class Fetcher:
             if (self.team in x.text):
                 
                 self.game_today = True
+
+                
+                
+
+
                 
                 x_list = list(x)
 
+                split_properly  = str(x_list[0].text).replace(" ", "").replace("at", " ").split()#["team1",  "team2"]
+                self.pre_game['road_team'] = split_properly[0]
+                self.pre_game['home_team'] = split_properly[1]
 
-                teams = x_list[0].text.split() #["team1", "at", "team2"]
-
-                self.pre_game['road_team'] = teams[0]
-                self.pre_game['home_team'] = teams[2]
-                self.pre_game['teams'] = x_list[0].text
-                self.pre_game['time'] = x_list[1].text
-                self.pre_game['away_tv'] = x_list[3].text
-                self.pre_game['home_tv'] = x_list[4].text
-                self.pre_game['tickets'] = x_list[6].text
+                self.pre_game['time'] = str(x_list[1].text)
+                self.pre_game['away_tv'] = str(x_list[3].text)
+                self.pre_game['home_tv'] = str(x_list[4].text)
+                self.pre_game['tickets'] = str(x_list[6].text)
 
                 
                 #get all the links.
                 a_all = x.find_all('a', href=True)
+
 
                 #Some games have the "Watch on ESPN" link, and some don't.
                 #So to solve that problem, all those are excluded.
@@ -155,6 +160,7 @@ class Fetcher:
                 self.pre_game['home_team_link'] = a_all[1]['href']
                 self.pre_game['preview_link'] = str(a_all[2]['href'])
                 self.pre_game['tickets_link'] = a_all[-1]['href']
+
 
                 #found team, no need to check further.
                 break
