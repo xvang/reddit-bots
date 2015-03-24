@@ -16,6 +16,7 @@ class Fetcher:
         self.team = "New York"                                  #Team to post for.
         self.fetched_pregame = False                        #if true, then already fetched game info.
         self.date_list = []                                   #["weekday", "month", "date"]
+        self.print_date = ""                                    #stores the date in easier-to-read format.
         self.weekday = 0                                         #0 = Monday, 1 = Tuesday, etc.
         self.pre_game  = {}                                     #dictionary that contains most of the game information.
         self.post_game = {}
@@ -28,6 +29,10 @@ class Fetcher:
 
         self.home_starters_stats = []                           #redundant?
         self.road_starters_stats = []
+
+        self.home_record = ""
+        self.road_record = ""
+        
         self.game_today = False
         self.weekday_conversion = {'Monday': 0,
                                    'Tuesday':1,
@@ -121,6 +126,16 @@ class Fetcher:
         #maybe we should have worked with this variable instead?
         self.date_list = game_date.copy()
 
+
+        year = datetime.datetime.now().year
+        month = self.date_list[1]
+        day = self.date_list[2]
+
+        t = time.mktime(  (year, month, day,0,0,0,0,0,0)  )
+        self.print_date = time.strftime("%b  %d, %Y", time.gmtime(t))
+        
+
+
         #Now that we have the date, we check if the team is playing.
         #'table' contains all of today's games.
         tr = target_table.find_all('tr',{})
@@ -191,13 +206,45 @@ class Fetcher:
                     break;
 
 
-        
-
+        #fetches the recods of the teams.
+        self.fetch_team_records()
 
         #At the very end of fetch_game_info(), we toggle "fetched" to true.
         #If something went wrong while parsing, then this statement should never be executed.
         self.fetched_pregame = True
 
+
+    #        self.home_record = ""
+        #self.road_record = ""
+    def fetch_team_records(self):
+        url = "http://espn.go.com/nba/standings"
+
+        page = urllib.request.urlopen(url)
+
+        soup = BeautifulSoup(page)
+
+        div = soup.find('table', {'class':'tablehead'})
+
+        tr = div.find_all('tr',{})
+        #the teams are stored in rows(tr)
+        print("Road team: " + str(self.pre_game['road_team']))
+        print("Home team: " + str(self.pre_game['home_team']))
+
+
+        #So "New York" and "NewYork" are two completely different things.
+        #In a different part of this page, I fetched the team names in the format ["team1", "at", "team2"]
+        #But for teams with two words, that screws everything up. So I got rid of the spaces. Now I have to do it for everything.
+        #That is the reason why the .replace() function is called.
+        for x in tr:
+            if(self.pre_game['road_team'] in x.text.replace(" ", "")):
+                print(x.text)
+
+            elif(self.pre_game['home_team'] in x.text.replace(" ", "")):
+                print(x.text)
+
+        #todo: store the team records in their variables.
+
+        
     def fetch_starters(self, team_name, team_list):
         url = "http://espn.go.com/nba/team/depth/_/name/"  + team_name
 
@@ -307,13 +354,11 @@ class Fetcher:
         dt = datetime.datetime(year, month, day, hour, minute)
         time_in_seconds = time.mktime(dt.timetuple())
 
-        #print("Game Time: " + str(time_in_seconds))
         return time_in_seconds
 
 
 
     def get_current_time(self):
-        #print("Current Time: " + str(time.time()))
         return time.time()
 
     

@@ -31,7 +31,7 @@ class Poster:
         subreddit = self.config.get('reddit_stuff', 'target_subreddit')
 
         
-        title = "Pre - Game Thread: " + str(game['road_team']) + " at " + str(game['home_team'])
+        title = "Pre - Game Thread" + str(game['road_team']) + " at " + str(game['home_team']+ "( " + str(fetch_object.print_date) + " ):  " )
 
         #####################################################################################
         #>>>>>>>>>>>>>>>>>>>>>THERE HAS TO BE A BETTER WAY. FIND IT XENG. FIIINNNNND IT.<<<<<<<<<<<<<<<<<<<<<<<<<
