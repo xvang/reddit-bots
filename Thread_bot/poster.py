@@ -31,7 +31,7 @@ class Poster:
         subreddit = self.config.get('reddit_stuff', 'target_subreddit')
 
         
-        title = "Pre - Game Thread" + str(game['road_team']) + " at " + str(game['home_team']+ "( " + str(fetch_object.print_date) + " ):  " )
+        title = "Pre - Game Thread  " + str(game['road_team']) + " at " + str(game['home_team']+ "( " + str(fetch_object.print_date) + " ):  " )
 
         #####################################################################################
         #>>>>>>>>>>>>>>>>>>>>>THERE HAS TO BE A BETTER WAY. FIND IT XENG. FIIINNNNND IT.<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -136,12 +136,28 @@ TV Information | Road Team: %s , Home Team: %s
 
         
         self.r.submit(subreddit, title, message).sticky()
-        print("THREAD POSTED GO CHECK!")
+        print("PRE-GAME THREAD POSTED GO CHECK!")
         
 
 
     def post_game(self, fetch_object):
-        dd = 3
+        #'fetch_object' contains all the info about the game.
+        game = fetch_object.pre_game
+
+        
+        home_team = fetch_object.home_starters_stats
+        road_team = fetch_object.road_starters_stats
+
+        subreddit = self.config.get('reddit_stuff', 'target_subreddit')
+
+        
+        title = "Game Thread --- " + str(game['road_team']) + " at " + str(game['home_team']+ "( " + str(fetch_object.print_date) + " ) " )
+
+        message = "Message here"
+
+        
+        self.r.submit(subreddit, title, message).sticky()
+        print("GAME THREAD POSTED GO CHECK")
 
     def post_postgame(self, fetch_object):
         dd = 4

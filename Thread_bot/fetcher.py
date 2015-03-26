@@ -13,7 +13,7 @@ class Fetcher:
     def __init__(self):
         s = 3
 
-        self.team = "New York"                                  #Team to post for.
+        self.team = "Indiana"                                  #Team to post for.
         self.fetched_pregame = False                        #if true, then already fetched game info.
         self.date_list = []                                   #["weekday", "month", "date"]
         self.print_date = ""                                    #stores the date in easier-to-read format.
@@ -188,23 +188,22 @@ class Fetcher:
         #Fetch the starters.
         self.fetch_starters(self.url_team_conversion[self.pre_game['home_team']],self.home_starters)
         self.fetch_starters(self.url_team_conversion[self.pre_game['road_team']], self.road_starters)
-
-
+        
         #Fetching the starters' stats from the team lists and storing them into a different list.
         #Redundant, but it's easier to sort them this way. I think.
         for x in self.home_starters:
+
             for y in self.home_team_list:
-                if(str(x) in y.dictionary['name']):
+                if(str(x).replace(" (IL)", "") in y.dictionary['name']):
                     self.home_starters_stats.append(y)
                     break;
 
 
         for x in self.road_starters:
             for y in self.road_team_list:
-                if (str(x) in y.dictionary['name']):
+                if (str(x).replace(" (IL)", "") in y.dictionary['name']):
                     self.road_starters_stats.append(y)
                     break;
-
 
         #fetches the recods of the teams.
         self.fetch_team_records()
@@ -227,8 +226,6 @@ class Fetcher:
 
         tr = div.find_all('tr',{})
         #the teams are stored in rows(tr)
-        print("Road team: " + str(self.pre_game['road_team']))
-        print("Home team: " + str(self.pre_game['home_team']))
 
 
         #So "New York" and "NewYork" are two completely different things.
@@ -237,10 +234,10 @@ class Fetcher:
         #That is the reason why the .replace() function is called.
         for x in tr:
             if(self.pre_game['road_team'] in x.text.replace(" ", "")):
-                print(x.text)
+                d = 43
 
             elif(self.pre_game['home_team'] in x.text.replace(" ", "")):
-                print(x.text)
+                d = 332
 
         #todo: store the team records in their variables.
 
@@ -265,7 +262,7 @@ class Fetcher:
                     team_list.append(names.text)
                     break;                                  #we break because we only want the first column, which are the starters.
                 counter = counter + 1               #Using a counter here is a temporary solution. We only want the [1] element of each row.
-        
+
     #Fetch starting players.
     def fetch_player_stats(self, team_name, team_list):
         url = "http://espn.go.com/nba/team/stats/_/name/" + team_name
@@ -318,11 +315,48 @@ class Fetcher:
 
 #################################################################################
 #################################################################################            
+
+    #Fetch the final scores and other post game information.
     def fetch_post_game_info(self):
         url = "http://espn.go.com/nba/schedule"
         page  = urllib.request.urlopen(url)
 
         soup = BeautifulSoup(page)
+
+        div = soup.find('div', {'class':'mod-container mod-table mod-no-header-footer'})
+
+
+        #get all the games (for the week, I think) that is displayed.
+        table = div.find_all('table', {'class':'tablehead'})
+
+        #There are 7 tables, one for each day of the week.
+        #If this function runs, then it is already CONFIRMED that that the team is playing today.
+        #We parse only the first table.
+        #If the results are not yet on the first table, we return and wait.
+        
+        target_table = table[0]
+
+        for tr in target_table:
+            if (self.team in tr.text and "result" in tr.text.lower()):
+
+                #fetch all the links in the 'tr'
+                links = tr.find_all('a', href=True)
+
+                #The first element in 'links' contain score.
+                score = links[0].text.split(",")
+
+                #Stores the scores in the format: ["team1 score", "team2 score"] 
+                print(score)
+                score = tr.text.replace("Pts", " ").replace(",", "").split()
+                print(score[:3])
+                gg = input("pause")
+
+            else:
+                print("No bueno!")
+                return False#game hasn't ended.
+
+            #Returns true if game ended and score was fetched.
+            return True
 
 
     def get_live_game_info(self):

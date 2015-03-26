@@ -49,25 +49,28 @@ class Thread:
 
             #for testing purposes we manually input into 'time_left'
             #XENG DELETE LATER!!!@!@!@!!!@!@!@@!
-            time_left = 500
+            time_left = 600
             #If 5 minutes before tipoff, then post the game thread.
-            if (not self.posted_game and time_left <= 300):
-               # self.postManager.post_game( self.fetchManager )
+            if (not self.posted_game and time_left > 0 and time_left <= 300):
+                self.postManager.post_game( self.fetchManager )
                 self.posted_game = True
                 
                 
             
             #if 30 minutes before tipoff, then post the pre-game thread.
-            elif (not self.posted_pre and time_left <= 1800):            
-                #self.postManager.post_pregame( self.fetchManager )
+            elif (not self.posted_pre and time_left > 0 and time_left <= 1800):            
+                self.postManager.post_pregame( self.fetchManager )
                 self.posted_pre = True
 
             #Average game is 2:30
             #So 2 hours and 30 minutes after game thread,
             #the post-game thread is posted.
             elif (not self.posted_post and time_left <= -9000):
-                self.postManager.post_postgame( self.fetchManager )
-                self.posted_post = True
+                game_ended = self.fetchManager.fetch_post_game_info()
+
+                if (game_ended):  
+                    self.postManager.post_postgame( self.fetchManager )
+                    self.posted_post = True
 
                 
 
