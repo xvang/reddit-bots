@@ -24,6 +24,8 @@ The options are:
 	
 #How to run the bot Option #1:
 
+This is for Windows, I'm not sure about any others.
+
 You will need to to have main.py and login.py in the same folder.
 
 You will need to create a file called 'auth.ini' and save it in the same place.
@@ -46,13 +48,14 @@ botname=
 
 Fill out it out accordingly. Write down an account's username, password, and a name for your bot.
 Make your the bot's name is unique and descriptive. Don't name it something like "SOFIOISDJOIJEEE"
-Everything should work after this.
+
+Open up IDLE. It should pop up when you search for it. Then open up main.py. Press F5 to run the bot. That's it!
 
 
 
 #How to run the bot Option #2:
 
-Comment out line 103. It is "login_info=login.login()"
+Comment out line 103. It is "login_info=login.login()" ..... or delete the line. You won't need it.
 
 To comment out a line, put the pound(#) sign in front of it.
 
@@ -62,4 +65,5 @@ Replace line 106 with this: r.login("username", "password")
 
 This is where you enter in the user name and password for your bot.
 
+Open up IDLE. It should pop up when you search for it. Then open up main.py. Press F5 to run the bot. That's it!
 
