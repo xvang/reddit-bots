@@ -11,4 +11,4 @@ Python
 
 The praw module (Python Reddit API Wrapper)
 
-More information about the scripts can be found in their folders. I will write the documentations. Eventually. 
+
